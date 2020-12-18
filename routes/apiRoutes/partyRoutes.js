@@ -3,10 +3,9 @@ const router = express.Router();
 const db = require('../../db/database');
 
 // Get all parties
-// cHANGED TO rOUTER. GET app.get('/api/parties', (req, res) => {
-  router.get('/parties', (req, res) => {
+router.get('/parties', (req, res) => {
   const sql = `SELECT * FROM parties`;
-  const params = [];
+  let params = [];
   db.all(sql, params, (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
@@ -20,8 +19,7 @@ const db = require('../../db/database');
   });
 });
 
-//ROUTE FOR A SINGLE PARTY
-// CHANGED TO ROUTER.GET app.get('/api/party/:id', (req, res) => {
+// Get single party
 router.get('/party/:id', (req, res) => {
   const sql = `SELECT * FROM parties WHERE id = ?`;
   const params = [req.params.id];
@@ -38,18 +36,17 @@ router.get('/party/:id', (req, res) => {
   });
 });
 
-//ROUTE TO REMOVE A ROW FROM PARTIES TABLE
-// CHANGED TO ROUTER.DELETE app.delete('/api/party/:id', (req, res) => {
+// Delete a party
 router.delete('/party/:id', (req, res) => {
   const sql = `DELETE FROM parties WHERE id = ?`;
-  const params = [req.params.id]
+  const params = [req.params.id];
   db.run(sql, params, function(err, result) {
     if (err) {
       res.status(400).json({ error: res.message });
       return;
     }
 
-    res.json({ message: 'successfully deleted', changes: this.changes });
+    res.json({ message: 'deleted', changes: this.changes });
   });
 });
 

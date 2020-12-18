@@ -4,12 +4,13 @@ const db = require('../../db/database');
 const inputCheck = require('../../utils/inputCheck');
 
 
-//GET ALL CANDIDATES --sends all candidates data as json object to the browser
-// use  http://localhost:3001/api/candidates to test.
-// Get all candidates and their party affiliation
 
+// use  http://localhost:3001/api/candidates to test.
 // Originally:  app.get('/api/candidates', (req, res) => {
   // changed to use router.get
+
+
+// Get all candidates and their party affiliation
 router.get('/candidates', (req, res) => {
   const sql =  `SELECT candidates.*, parties.name 
                 AS party_name 
@@ -30,11 +31,13 @@ router.get('/candidates', (req, res) => {
   });
 });
 
+
 //GET A SINGLE CANDIDATE API route and database call // use  http://localhost:3001/api/candidates to test.
+
 // Get single candidate with party affliliation
 // Originally : app.get('/api/candidate/:id', (req, res) => {
   //changed to router.get
-  router.get('/candidate/:id', (req, res) => {
+router.get('/candidate/:id', (req, res) => {
   const sql = `SELECT candidates.*, parties.name 
                AS party_name 
                FROM candidates 
@@ -55,11 +58,13 @@ router.get('/candidates', (req, res) => {
   });
 });
 
+
 // Create a candidate
 // Originally:  app.post('/api/candidate', ({ body }, res) => {
   // changed to router.post
   // Candidate is allowed not to be affiliated with a party
 router.post('/candidate', ({ body }, res) => {
+  // Candidate is allowed to have no party affiliation
   const errors = inputCheck(body, 'first_name', 'last_name', 'industry_connected');
   if (errors) {
     res.status(400).json({ error: errors });
@@ -83,11 +88,12 @@ router.post('/candidate', ({ body }, res) => {
   });
 });
 
+
 //UPDATE CANDIDATE'S PARTY
 //Origninally: app.put('/api/candidate/:id', (req, res) => {
   //updated to router.put
 // Candidate is allowed to not have party affiliation
- router.put('/candidate/:id', (req, res) => {
+router.put('/candidate/:id', (req, res) => {
   // Data validation 
   const errors = inputCheck(req.body, 'party_id');
   if (errors) {
@@ -112,10 +118,10 @@ router.post('/candidate', ({ body }, res) => {
   });
 });
 
-  //DELETE A CANDIDATE ROUTE
+//DELETE A CANDIDATE ROUTE
   // Originally app.delete('/api/candidate/:id', (req, res) => {
     //changed to router.deletd
-  router.delete('/candidate/:id', (req, res) => {
+router.delete('/candidate/:id', (req, res) => {
   const sql = `DELETE FROM candidates WHERE id = ?`;
   const params = [req.params.id];
   db.run(sql, params, function(err, result) {
@@ -123,7 +129,6 @@ router.post('/candidate', ({ body }, res) => {
       res.status(400).json({ error: res.message });
       return;
     }
-
     res.json({ message: 'deleted', changes: this.changes });
   });
 });
