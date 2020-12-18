@@ -1,21 +1,42 @@
 
-const sqlite3 = require('sqlite3').verbose();
+// const sqlite3 = require('sqlite3').verbose();  -- Moved to database.js
+
 const express = require('express');
+const db = require('./db/database');
+
 const PORT = process.env.PORT || 3001;
 const app = express();
-const inputCheck = require('./utils/inputCheck');
 
-//express middleware
-app.use(express.urlencoded({ extended: false}));
+const apiRoutes = require('./routes/apiRoutes');
+// Express middleware
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-//Connect to database
-const db = new sqlite3.Database('./db/election.db', err =>{
-  if(err){
-    return console.error(err.message);
-  }
-  console.log(`Connected to the election database.`);
+// Use apiRoutes
+app.use('/api', apiRoutes);
+
+// Default response for any other request(Not Found) Catch all other
+app.use((req, res) => {
+  res.status(404).end();
 });
+
+// Start server after DB connection
+db.on('open', () => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+});
+
+
+
+// Connect to database  -- moved CONNECT CODE TO DATABASE.JS
+// const db = new sqlite3.Database('./db/election.db', err => {
+//   if (err) {
+//     return console.error(err.message);
+//   }
+
+//   console.log('Connected to the votes database.');
+// });
 
 // TEST CODE TO see this result on http://localhos3001
 // app.get('/', (req,res) =>{
@@ -32,26 +53,10 @@ const db = new sqlite3.Database('./db/election.db', err =>{
 //  console.log(rows);
 // }); 
 
-//GET ALL CANDIDATES --sends all candidates data as json object to the browser
-// use  http://localhost:3001/api/candidates to test.
-app.get('/api/candidates',(req,res) => {
-  const sql = `SELECT candidates.*, parties.name 
-             AS party_name 
-             FROM candidates 
-             LEFT JOIN parties 
-             ON candidates.party_id = parties.id`;
-  const params = [];
-  db.all(sql, params, (err,rows) => {
-    if(err){
-      res.status(500).json({ error: err.message});
-      return;
-    }
-    res.json({
-      message: `success`,
-      data: rows
-    });
-  });
-});
+//*************************************
+// ******** Candidate routes **********
+//     Moved to candidtateRoutes.js
+//*************************************
 
 //TEST GET SINGLE CANDIDATE database call (temporarily hardcode id to 1, 10, -10 during dev and test -- later set to a variable -- replace when add api route to db call below
 // db.get(`SELECT * FROM candidates WHERE id = 1`, (err, row) => {
@@ -61,59 +66,6 @@ app.get('/api/candidates',(req,res) => {
 //   console.log(row);
 // });
 
-//GET A SINGLE CANDIDATE API route and database call // use  http://localhost:3001/api/candidates to test.
-app.get('/api/candidate/:id', (req, res) => {
- const sql = `SELECT candidate.*, parties.name 
-             AS party_name 
-             FROM candidate 
-             LEFT JOIN parties 
-             ON candidate.party_id = parties.id 
-             WHERE candidate.id = ?`;
-  const params = [req.params.id];
-  db.get(sql, params, (err, row) => {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-
-    res.json({
-      message: 'success',
-      data: row
-    });
-  });
-});
-
-//TEST DELETE A CANDIDATE database call replace when add api route to db call below
-// db.run(`DELETE FROM candidates WHERE id = ?`, 1, function(err, result) {
-//   if (err) {
-//     console.log(err);
-//   }
-//   console.log(result, this, this.changes);
-// });
-
-//DELETE A CANDIDATE ROUTE
-app.delete('/api/candidate/:id', (req, res) => {
-  const sql = `DELETE FROM candidates WHERE id = ?`;
-  const params = [req.params.id];
-  db.run(sql, params, function(err, result) {
-    if (err) {
-      res.status(400).json({ error: res.message });
-      return;
-    }
-
-    res.json({
-      message: 'successfully deleted',
-      changes: this.changes
-    });
-  });
-});
-// Create a candidate
-app.post('/api/candidate', ({ body }, res) => {
-  const errors = inputCheck(body, 'first_name', 'last_name', 'industry_connected');
-  if (errors) {
-    res.status(400).json({ error: errors });
-    return;
-  }
 
 
 //CREATE A CANDIDATE
@@ -131,35 +83,41 @@ app.post('/api/candidate', ({ body }, res) => {
 //   console.log(result, this.lastID);
 // });
 
-const sql = `INSERT INTO candidates (first_name, last_name, industry_connected) 
-              VALUES (?,?,?)`;
-const params = [body.first_name, body.last_name, body.industry_connected];
-// ES5 function, not arrow function, to use `this`
-db.run(sql, params, function(err, result) {
-  if (err) {
-    res.status(400).json({ error: err.message });
-    return;
-  }
-
-  res.json({
-    message: 'success',
-    data: body,
-    id: this.lastID
-  });
-});
-});
 
 
+//update candidate's party -- moved to candidateRoutes.js
+
+
+//TEST DELETE A CANDIDATE database call replace when add api route to db call below
+// db.run(`DELETE FROM candidates WHERE id = ?`, 1, function(err, result) {
+//   if (err) {
+//     console.log(err);
+//   }
+//   console.log(result, this, this.changes);
+// });
+
+
+//DELETE A CANDIDATE ROUTE -- Moved to candidateRoutes.js
+
+
+//*************************************
+// *********** Party routes ***********
+//       MOVED TO PARTYROUTES.JS
+//*************************************
+
+//ROUTE FOR GET ALL PARTIES
+
+
+
+//ROUTE FOR A SINGle PARTS  -- NOTe THIS INCLUDES AND ID PARAMETER
+
+
+//REMOVE A ROW FROM PARTIES TABLE -- Also use normal function syntax for db.run() callback instead of arrow so can use this.
+
+
+//*************************************
+// *********** Voter routes ***********
+//*************************************
 
 
 //Default response for any other request (Not Found) Catch all
-app.use((req,res) =>{
-  res.status(404).end();
-});
-
-//Event Handler - Start server after DB connection
-db.on('open',() => {
-app.listen(PORT, () =>{
-  console.log(`Server running on port ${PORT}`)
-});
-});
